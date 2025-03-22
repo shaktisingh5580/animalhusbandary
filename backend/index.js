@@ -1,68 +1,50 @@
-import express from "express"
-import cors from "cors"
-import admin from "firebase-admin"
-import dotenv from "dotenv"
-import medicineRoutes from "./routes/medicines.js"
-import healthRoutes from "./routes/health.js"
-import userRoutes from "./routes/users.js"
-import notificationRoutes from "./routes/notifications.js"
-import locationRoutes from "./routes/locations.js"
+import express from "express";
+import cors from "cors";
+import admin from "firebase-admin";
+import dotenv from "dotenv";
+import authRoutes from "./routes/auth.js";
+import usersRoutes from "./routes/users.js";
+import medicinesRoutes from "./routes/medicines.js";
+import healthRoutes from "./routes/health.js";
+import locationsRoutes from "./routes/locations.js";
+import notificationsRoutes from "./routes/notifications.js";
 
 // Load environment variables
-dotenv.config()
+dotenv.config();
 
 // Initialize Firebase Admin SDK
-const serviceAccount = {
-  type: "service_account",
-  project_id: process.env.FIREBASE_PROJECT_ID,
-  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  client_email: process.env.FIREBASE_CLIENT_EMAIL,
-  client_id: process.env.FIREBASE_CLIENT_ID,
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"), // Ensure proper formatting
+    }),
+  });
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
-})
-
-// Initialize express app
-const app = express()
-const PORT = process.env.PORT || 5000
+// Create Express app
+const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-// API Routes
-app.use("/api/medicines", medicineRoutes)
-app.use("/api/health", healthRoutes)
-app.use("/api/users", userRoutes)
-app.use("/api/notifications", notificationRoutes)
-app.use("/api/locations", locationRoutes)
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/medicines", medicinesRoutes);
+app.use("/api/health", healthRoutes);
+app.use("/api/locations", locationsRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Root route
 app.get("/", (req, res) => {
-  res.send("Animal Husbandry Inventory System API is running")
-})
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
-  })
-})
+  res.send("Animal Husbandry Inventory System API is running...");
+});
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
-
-export default app
-
+  console.log(`Server running on port ${PORT}`);
+});
