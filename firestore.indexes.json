@@ -1,0 +1,40 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "medicineRequests",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "userId", "order": "ASCENDING" }, { "fieldPath": "requestedAt", "order": "DESCENDING" }]
+    },
+    {
+      "collectionGroup": "medicineRequests",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "requestedAt", "order": "DESCENDING" }]
+    },
+    {
+      "collectionGroup": "healthReports",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "userId", "order": "ASCENDING" }, { "fieldPath": "reportDate", "order": "DESCENDING" }]
+    },
+    {
+      "collectionGroup": "healthReports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "DESCENDING" },
+        { "fieldPath": "reportDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "userId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }]
+    },
+    {
+      "collectionGroup": "healthReportComments",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "reportId", "order": "ASCENDING" }, { "fieldPath": "timestamp", "order": "ASCENDING" }]
+    }
+  ],
+  "fieldOverrides": []
+}
+

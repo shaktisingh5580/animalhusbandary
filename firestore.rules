@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Common functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+    
+    function isFarmer() {
+      return hasRole('farmer');
+    }
+    
+    function isVeterinary() {
+      return hasRole('veterinary');
+    }
+    
+    function isGovernment() {
+      return hasRole('government');
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isGovernment());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isGovernment();
+    }
+    
+    // Medicines collection
+    match /medicines/{medicineId} {
+      allow read: if isSignedIn();
+      allow create, update: if isVeterinary() || isGovernment();
+      allow delete: if isGovernment();
+    }
+    
+    // Medicine requests collection
+    match /medicineRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isVeterinary() || 
+        isGovernment()
+      );
+      allow create: if isSignedIn() && isFarmer();
+      allow update: if isSignedIn() && (
+        (isFarmer() && resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        isVeterinary() ||
+        isGovernment()
+      );
+      allow delete: if isGovernment();
+    }
+    
+    // Health reports collection
+    match /healthReports/{reportId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isVeterinary() || 
+        isGovernment()
+      );
+      allow create: if isSignedIn() && isFarmer();
+      allow update: if isSignedIn() && (
+        (isFarmer() && resource.data.userId == request.auth.uid) ||
+        isVeterinary() ||
+        isGovernment()
+      );
+      allow delete: if isGovernment();
+    }
+    
+    // Health report comments
+    match /healthReportComments/{commentId} {
+      allow read: if isSignedIn() && (
+        exists(/databases/$(database)/documents/healthReports/$(resource.data.reportId)) &&
+        (
+          get(/databases/$(database)/documents/healthReports/$(resource.data.reportId)).data.userId == request.auth.uid ||
+          isVeterinary() ||
+          isGovernment()
+        )
+      );
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if false; // Only created by server
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Locations collection
+    match /locations/{locationId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isFarmer() && resource.data.userRole == 'veterinary' ||
+        isVeterinary() ||
+        isGovernment()
+      );
+      allow create, update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Audit logs collection
+    match /auditLogs/{logId} {
+      allow read: if isGovernment();
+      allow create, update, delete: if false; // Only created by server
+    }
+    
+    // Medicine distributions collection
+    match /medicineDistributions/{distributionId} {
+      allow read: if isSignedIn() && (
+        resource.data.farmerId == request.auth.uid || 
+        isVeterinary() || 
+        isGovernment()
+      );
+      allow create, update, delete: if false; // Only created by server
+    }
+  }
+}
+
